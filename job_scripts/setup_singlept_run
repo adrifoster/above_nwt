@@ -31,7 +31,7 @@
 # example config file:
 #   SRC_DIR=/glade/work/afoster/ABoVE/calibration_update/CTSM
 #   CASE_DIR=/glade/work/afoster/ABoVE/calibration_update/cases
-#   USER_MODS_DIR=/glade/work/afoster/ABoVE/calibration_update/user_mods_black_spruce
+#   USER_MODS_DIR=/glade/work/afoster/ABoVE/above_nwt/user_mods_black_spruce
 #   COMPSET=I1PtClm60Fates
 #   CASENAME=NWT_black_spruce
 #   CHARGENUM=P08010000
