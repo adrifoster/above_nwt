@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+#==============================================================================
+# Create and submit a single-point CLM/FATES case.
+#
+# Reads a config file (passed as the first argument), sets up a new CIME case
+# at a single lat/lon point using CLM_USRDAT, applies a standard set of XML
+# and namelist settings, then runs case.setup, preview_namelists, and
+# case.build. 
+#
+# Usage:
+#   ./setup_singlept_run <config_file>
+#
+# The config file is sourced via read_config and must define the following:
+#
+#   SRC_DIR        path to the CTSM checkout
+#   CASE_DIR       directory in which the new case will be created.
+#   CASENAME       name of the case (case is created at $CASE_DIR/$CASENAME).
+#   USER_MODS_DIR  user_mods directory passed to create_newcase.
+#   COMPSET        compset to use (e.g. I1PtClm60Fates).
+#   SITE           site identifier; used to locate the subset surface/domain
+#                  data and the fsurdat file.
+#   LAT, LON       point coordinates (PTS_LAT / PTS_LON).
+#   STOP_N         number of years per run segment (STOP_OPTION=nyears).
+#   RESUBMIT       number of automatic resubmissions.
+#
+# Optional:
+#   CHARGENUM      project/charge account passed to --project. If unset, the
+#                  PROJECT environment variable is used instead; if neither is
+#                  set, the script exits with an error.
+#
+# example config file:
+#   SRC_DIR=/glade/work/afoster/ABoVE/calibration_update/CTSM
+#   CASE_DIR=/glade/work/afoster/ABoVE/calibration_update/cases
+#   USER_MODS_DIR=/glade/work/afoster/ABoVE/calibration_update/user_mods_black_spruce
+#   COMPSET=I1PtClm60Fates
+#   CASENAME=NWT_black_spruce
+#   CHARGENUM=P08010000
+#   STOP_N=20
+#   RESUBMIT=4
+#   LAT=62.43462
+#   LON=246.84602
+#   SITE=ZF14-207
+#
+
+#==============================================================================
+
+if [ $# -lt 1 ]
+then
+  echo "ERROR: please specify config file"
+  exit 1
+fi
+config_file="$1"
+
+# source utility functions
+source "$(dirname "$0")/common_utils"
+
+# read and export config variables
+read_config "$config_file"
+
+# ensure required environment variables are set
+base_vars=(SITE CASE_DIR CASENAME SRC_DIR COMPSET USER_MODS_DIR STOP_N RESUBMIT LAT LON)
+check_required_vars "${base_vars[@]}"
+
+chargenum="${CHARGENUM:-$PROJECT}"
+if [ -z "${chargenum}" ]; then
+  echo "ERROR: neither CHARGENUM nor PROJECT is set"
+  exit 1
+fi
+
+# case setup and run
+case_name=${CASE_DIR}/${CASENAME}
+
+# change into cime directory
+cd "${SRC_DIR}/cime/scripts" || { echo "ERROR: Failed to change directory to ${SRC_DIR}/cime/scripts"; exit 1; }
+
+# create a new case
+./create_newcase --case ${case_name} --compset ${COMPSET} --res CLM_USRDAT --project ${chargenum} --run-unsupported --user-mods-dir ${USER_MODS_DIR}
+
+cd "${case_name}" || { echo "ERROR: Failed to change directory to ${case_name}"; exit 1; }
+
+# env_workflow.xml
+./xmlchange JOB_WALLCLOCK_TIME=06:00:00
+
+# Explicitly set PIO Type to NETCDF since this is a single processor case (should already be set this way)
+./xmlchange --force PIO_TYPENAME=netcdf
+
+./xmlchange DATM_MODE=CLMCRUJRA2024
+./xmlchange RUN_STARTDATE=0001-01-01
+./xmlchange STOP_OPTION=nyears
+./xmlchange STOP_N=${STOP_N}
+./xmlchange RESUBMIT=${RESUBMIT}
+./xmlchange DATM_YR_ALIGN=1
+./xmlchange DATM_YR_START=1914
+./xmlchange DATM_YR_END=2014
+./xmlchange CLM_ACCELERATED_SPINUP=off
+
+./xmlchange PTS_LON=${LON}
+./xmlchange PTS_LAT=${LAT}
+
+./xmlchange --force CLM_USRDAT_DIR=/glade/work/afoster/ABoVE/subset_data/dat_${SITE}
+
+echo "fsurdat = '\$CLM_USRDAT_DIR/surfdata_${SITE}_hist_2000_16pfts_c260129.nc'" >> user_nl_clm
+
+# Setup case
+./case.setup
+
+# Generate namelists
+./preview_namelists
+
+# Build case
+./case.build
+
+# Submit case
+./case.submit
