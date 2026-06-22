@@ -96,6 +96,7 @@ cd "${case_name}" || { echo "ERROR: Failed to change directory to ${case_name}";
 
 ./xmlchange PTS_LON=${LON}
 ./xmlchange PTS_LAT=${LAT}
+./xmlchange CLM_USRDAT_DIR=/glade/work/afoster/ABoVE/subset_data/dat_${SITE}
 
 ./xmlchange --force CLM_USRDAT_DIR=/glade/work/afoster/ABoVE/subset_data/dat_${SITE}
 
