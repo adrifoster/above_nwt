@@ -60,7 +60,7 @@ source "$(dirname "$0")/common_utils"
 read_config "$config_file"
 
 # ensure required environment variables are set
-base_vars=(SITE CASE_DIR CASENAME SRC_DIR COMPSET USER_MODS_DIR STOP_N RESUBMIT LAT LON)
+base_vars=(SITE CASE_DIR CASENAME SRC_DIR COMPSET USER_MODS_DIR STOP_N RESUBMIT LAT LON SURDAT_FILE)
 check_required_vars "${base_vars[@]}"
 
 chargenum="${CHARGENUM:-$PROJECT}"
