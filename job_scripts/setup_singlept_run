@@ -22,7 +22,15 @@ and namelist settings, then runs case.setup, preview_namelists, and
 case.build.
 
 Usage:
-  ./setup_singlept_run [-a|--account|--chargenum|--project <number>]  [-c|--case-dir <dir>] [-d|--clm-usrdat-dir-parent <dir>] [-n|--case-name <name>] [-s|--src-dir <dir>] [-u|--user-mods-dir <dir>] <config_file>
+  ./setup_singlept_run [options] <config_file>
+
+Options:
+  -a, --account, --chargenum, --project <number>
+  -c, --case-dir <dir>
+  -d, --clm-usrdat-dir-parent <dir>
+  -n, --case-name <name>
+  -s, --src-dir <dir>
+  -u, --user-mods-dir <dir>
 
 The config file is sourced via read_config and must define the following:
 
