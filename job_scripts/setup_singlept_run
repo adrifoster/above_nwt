@@ -8,14 +8,13 @@
 # case.build. 
 #
 # Usage:
-#   ./setup_singlept_run <config_file>
+#   ./setup_singlept_run [-u|--user-mods-dir <dir>] <config_file>
 #
 # The config file is sourced via read_config and must define the following:
 #
 #   SRC_DIR        path to the CTSM checkout
 #   CASE_DIR       directory in which the new case will be created.
 #   CASENAME       name of the case (case is created at $CASE_DIR/$CASENAME).
-#   USER_MODS_DIR  user_mods directory passed to create_newcase.
 #   COMPSET        compset to use (e.g. I1PtClm60Fates).
 #   SITE           site identifier; used to locate the subset surface/domain
 #                  data and the fsurdat file.
@@ -25,6 +24,10 @@
 #   SURDAT_FILE    file name of surface dataset
 #
 # Optional:
+#   USER_MODS_DIR  user_mods directory passed to create_newcase. Can also be
+#                  set on the command line with -u/--user-mods-dir, which takes
+#                  precedence over the config file. If set in neither place,
+#                  defaults to ../user_mods relative to this script's directory.
 #   CHARGENUM      project/charge account passed to --project. If unset, the
 #                  PROJECT environment variable is used instead; if neither is
 #                  set, the script exits with an error.
@@ -46,18 +49,62 @@
 
 #==============================================================================
 
-if [ $# -lt 1 ]
-then
+# absolute path to the directory containing this script
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+
+# default user_mods directory (overridable with -u/--user-mods-dir):
+# ../user_mods relative to the directory containing this script
+DEFAULT_USER_MODS_DIR="${script_dir}/../user_mods"
+
+# parse command-line arguments
+config_file=""
+user_mods_dir=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -u|--user-mods-dir)
+      if [ $# -lt 2 ]; then
+        echo "ERROR: $1 requires an argument"
+        exit 1
+      fi
+      user_mods_dir="$2"
+      shift 2
+      ;;
+    --user-mods-dir=*)
+      user_mods_dir="${1#*=}"
+      shift
+      ;;
+    -h|--help)
+      echo "Usage: $0 [-u|--user-mods-dir <dir>] <config_file>"
+      exit 0
+      ;;
+    -*)
+      echo "ERROR: unknown option '$1'"
+      exit 1
+      ;;
+    *)
+      if [ -n "$config_file" ]; then
+        echo "ERROR: unexpected argument '$1'"
+        exit 1
+      fi
+      config_file="$1"
+      shift
+      ;;
+  esac
+done
+
+if [ -z "$config_file" ]; then
   echo "ERROR: please specify config file"
   exit 1
 fi
-config_file="$1"
 
 # source utility functions
 source "$(dirname "$0")/common_utils"
 
 # read and export config variables
 read_config "$config_file"
+
+# user_mods directory precedence: command-line flag > config file > default
+USER_MODS_DIR="${user_mods_dir:-${USER_MODS_DIR:-$DEFAULT_USER_MODS_DIR}}"
 
 # ensure required environment variables are set
 base_vars=(SITE CASE_DIR CASENAME SRC_DIR COMPSET USER_MODS_DIR STOP_N RESUBMIT LAT LON SURDAT_FILE)
