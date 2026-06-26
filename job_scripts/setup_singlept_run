@@ -206,3 +206,5 @@ echo "fsurdat = '\$CLM_USRDAT_DIR/${SURDAT_FILE}'" >> user_nl_clm
 
 # Submit case
 ./case.submit
+
+exit 0
