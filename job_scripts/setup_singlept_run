@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 #==============================================================================
 # Define default arg values
@@ -9,7 +10,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 DEFAULT_USER_MODS_DIR="${script_dir}/../user_mods"
 
 #==============================================================================
-read -r -d '' helptext << EOM
+read -r -d '' helptext << EOM || true
 Create and submit a single-point CLM/FATES case.
 
 Reads a config file (passed as the first argument), sets up a new CIME case
@@ -147,7 +148,9 @@ USER_MODS_DIR="${user_mods_dir:-${USER_MODS_DIR:-$DEFAULT_USER_MODS_DIR}}"
 
 # ensure required environment variables are set
 base_vars=(SITE CASE_DIR CASENAME SRC_DIR COMPSET USER_MODS_DIR STOP_N RESUBMIT LAT LON SURDAT_FILE)
+set +u
 check_required_vars "${base_vars[@]}"
+set -u
 
 chargenum="${CHARGENUM:-$PROJECT}"
 if [ -z "${chargenum}" ]; then
@@ -159,12 +162,16 @@ fi
 case_name=${CASE_DIR}/${CASENAME}
 
 # change into cime directory
+set +e
 cd "${SRC_DIR}/cime/scripts" || { echo "ERROR: Failed to change directory to ${SRC_DIR}/cime/scripts"; exit 1; }
+set -e
 
 # create a new case
 ./create_newcase --case ${case_name} --compset ${COMPSET} --res CLM_USRDAT --project ${chargenum} --run-unsupported --user-mods-dir ${USER_MODS_DIR}
 
+set +e
 cd "${case_name}" || { echo "ERROR: Failed to change directory to ${case_name}"; exit 1; }
+set -e
 
 # env_workflow.xml
 ./xmlchange JOB_WALLCLOCK_TIME=06:00:00
