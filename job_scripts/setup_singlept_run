@@ -4,6 +4,9 @@ set -euo pipefail
 #==============================================================================
 # Define default arg values
 
+# default CLM_USRDAT_DIR_PARENT (overridable with -d/--clm-usrdat-dir-parent):
+DEFAULT_CLM_USRDAT_DIR_PARENT="/glade/work/afoster/ABoVE/subset_data"
+
 # default user_mods directory (overridable with -u/--user-mods-dir):
 # ../user_mods relative to the directory containing this script
 script_dir="$(cd "$(dirname "$0")" && pwd)"
@@ -19,7 +22,7 @@ and namelist settings, then runs case.setup, preview_namelists, and
 case.build.
 
 Usage:
-  ./setup_singlept_run [-c|--case-dir <dir>] [-n|--case-name <name>] [-s|--src-dir <dir>] [-u|--user-mods-dir <dir>] <config_file>
+  ./setup_singlept_run [-c|--case-dir <dir>] [-d|--clm-usrdat-dir-parent <dir>] [-n|--case-name <name>] [-s|--src-dir <dir>] [-u|--user-mods-dir <dir>] <config_file>
 
 The config file is sourced via read_config and must define the following:
 
@@ -29,7 +32,8 @@ The config file is sourced via read_config and must define the following:
   LAT, LON       point coordinates (PTS_LAT / PTS_LON).
   STOP_N         number of years per run segment (STOP_OPTION=nyears).
   RESUBMIT       number of automatic resubmissions.
-  SURDAT_FILE    file name of surface dataset
+  SURDAT_FILE    file name of surface dataset; must be relative to
+                 \${CLM_USRDAT_DIR_PARENT}/dat_\${SITE}
 
 Optional:
   SRC_DIR        path to the CTSM checkout. Can also be set on the command line
@@ -48,6 +52,12 @@ Optional:
   CHARGENUM      project/charge account passed to --project. If unset, the
                  PROJECT environment variable is used instead; if neither is
                  set, the script exits with an error.
+  CLM_USRDAT_DIR_PARENT
+                 \${CLM_USRDAT_DIR_PARENT}/dat_\${SITE} will be set as the
+                 case's CLM_USRDAT_DIR namelist variable. Can also be set on
+                 the command line with -d/--clm-usrdat-dir-parent, which takes
+                 precedence over the config file. If set in neither place,
+                 defaults to '${DEFAULT_CLM_USRDAT_DIR_PARENT}'
 
 example config file:
   SRC_DIR=/glade/work/afoster/ABoVE/calibration_update/CTSM
@@ -68,6 +78,7 @@ EOM
 
 # parse command-line arguments
 case_dir=""
+clm_usrdat_dir_parent=""
 case_name=""
 config_file=""
 src_dir=""
@@ -80,6 +91,14 @@ while [ $# -gt 0 ]; do
         exit 1
       fi
       case_dir="$2"
+      shift 2
+      ;;
+    -d|--clm-usrdat-dir-parent)
+      if [ $# -lt 2 ]; then
+        echo "ERROR: $1 requires an argument" >&2
+        exit 1
+      fi
+      clm_usrdat_dir_parent="$2"
       shift 2
       ;;
     -n|--case-name)
@@ -142,12 +161,13 @@ read_config "$config_file"
 
 # optional arg value precedence: command-line flag > config file > default
 CASE_DIR="${case_dir:-${CASE_DIR}}"
+CLM_USRDAT_DIR_PARENT="${clm_userdat_dir_parent:-${CLM_USRDAT_DIR_PARENT:-$DEFAULT_CLM_USRDAT_DIR_PARENT}}"
 CASENAME="${case_name:-${CASE_NAME}}"
 SRC_DIR="${src_dir:-${SRC_DIR}}"
 USER_MODS_DIR="${user_mods_dir:-${USER_MODS_DIR:-$DEFAULT_USER_MODS_DIR}}"
 
 # ensure required environment variables are set
-base_vars=(SITE CASE_DIR CASENAME SRC_DIR COMPSET USER_MODS_DIR STOP_N RESUBMIT LAT LON SURDAT_FILE)
+base_vars=(SITE CASE_DIR CASENAME SRC_DIR COMPSET USER_MODS_DIR STOP_N RESUBMIT LAT LON SURDAT_FILE CLM_USRDAT_DIR_PARENT)
 set +u
 check_required_vars "${base_vars[@]}"
 set -u
@@ -191,7 +211,7 @@ set -e
 
 ./xmlchange PTS_LON=${LON}
 ./xmlchange PTS_LAT=${LAT}
-./xmlchange --force CLM_USRDAT_DIR=/glade/work/afoster/ABoVE/subset_data/dat_${SITE}
+./xmlchange --force CLM_USRDAT_DIR=${CLM_USRDAT_DIR_PARENT}/dat_${SITE}
 
 echo "fsurdat = '\$CLM_USRDAT_DIR/${SURDAT_FILE}'" >> user_nl_clm
 
