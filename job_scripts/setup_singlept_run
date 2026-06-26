@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 
+#==============================================================================
+# Define default arg values
+
 # default source directory (overridable with -s/--src-dir):
 # ../user_mods relative to the directory containing this script
 DEFAULT_SRC_DIR="/glade/work/afoster/ABoVE/calibration_update/CTSM"
+
+# default user_mods directory (overridable with -u/--user-mods-dir):
+# ../user_mods relative to the directory containing this script
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+DEFAULT_USER_MODS_DIR="${script_dir}/../user_mods"
 
 #==============================================================================
 read -r -d '' helptext << EOM
@@ -35,7 +43,8 @@ Optional:
   USER_MODS_DIR  user_mods directory passed to create_newcase. Can also be
                  set on the command line with -u/--user-mods-dir, which takes
                  precedence over the config file. If set in neither place,
-                 defaults to ../user_mods relative to this script's directory.
+                 defaults to ../user_mods relative to this script's directory:
+                 '${DEFAULT_USER_MODS_DIR}'.
   CHARGENUM      project/charge account passed to --project. If unset, the
                  PROJECT environment variable is used instead; if neither is
                  set, the script exits with an error.
@@ -56,13 +65,6 @@ example config file:
 EOM
 
 #==============================================================================
-
-# absolute path to the directory containing this script
-script_dir="$(cd "$(dirname "$0")" && pwd)"
-
-# default user_mods directory (overridable with -u/--user-mods-dir):
-# ../user_mods relative to the directory containing this script
-DEFAULT_USER_MODS_DIR="${script_dir}/../user_mods"
 
 # parse command-line arguments
 config_file=""
