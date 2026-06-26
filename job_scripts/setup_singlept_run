@@ -53,7 +53,8 @@ Optional:
                  the command line with -a/--account/--chargenum/--project, which
                  takes precedence over the config file. If neither is given, the
                  PROJECT environment variable is used instead; if that is unset,
-                 the script exits with an error.
+                 the ACCOUNT environment variable is used instead; if that is
+                 unset, the script exits with an error.
   CLM_USRDAT_DIR_PARENT
                  \${CLM_USRDAT_DIR_PARENT}/dat_\${SITE} will be set as the
                  case's CLM_USRDAT_DIR namelist variable. Can also be set on
@@ -184,7 +185,7 @@ check_required_vars "${base_vars[@]}"
 set -u
 
 # get and check charge account
-chargenum="${chargenum:-${CHARGENUM:-$PROJECT}}"
+chargenum="${chargenum:-${CHARGENUM:-${PROJECT:-$ACCOUNT}}}"
 if [ -z "${chargenum}" ]; then
   echo "ERROR: neither CHARGENUM nor PROJECT is set" >&2
   exit 1
