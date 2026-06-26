@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+
+# default source directory (overridable with -s/--src-dir):
+# ../user_mods relative to the directory containing this script
+DEFAULT_SRC_DIR="/glade/work/afoster/ABoVE/calibration_update/CTSM"
+
 #==============================================================================
 read -r -d '' helptext << EOM
 Create and submit a single-point CLM/FATES case.
@@ -9,11 +14,10 @@ and namelist settings, then runs case.setup, preview_namelists, and
 case.build.
 
 Usage:
-  ./setup_singlept_run [-u|--user-mods-dir <dir>] <config_file>
+  ./setup_singlept_run [-s|--src-dir <dir>] [-u|--user-mods-dir <dir>] <config_file>
 
 The config file is sourced via read_config and must define the following:
 
-  SRC_DIR        path to the CTSM checkout
   CASE_DIR       directory in which the new case will be created.
   CASENAME       name of the case (case is created at \$CASE_DIR/\$CASENAME).
   COMPSET        compset to use (e.g. I1PtClm60Fates).
@@ -25,6 +29,9 @@ The config file is sourced via read_config and must define the following:
   SURDAT_FILE    file name of surface dataset
 
 Optional:
+  SRC_DIR        path to the CTSM checkout. Can also be set on the command line
+                 with -s/--src-dir, which takes precedence over the config file.
+                 If set in neither place, defaults to '${DEFAULT_SRC_DIR}'.
   USER_MODS_DIR  user_mods directory passed to create_newcase. Can also be
                  set on the command line with -u/--user-mods-dir, which takes
                  precedence over the config file. If set in neither place,
@@ -59,9 +66,18 @@ DEFAULT_USER_MODS_DIR="${script_dir}/../user_mods"
 
 # parse command-line arguments
 config_file=""
+src_dir=""
 user_mods_dir=""
 while [ $# -gt 0 ]; do
   case "$1" in
+    -s|--src-dir)
+      if [ $# -lt 2 ]; then
+        echo "ERROR: $1 requires an argument"
+        exit 1
+      fi
+      src_dir="$2"
+      shift 2
+      ;;
     -u|--user-mods-dir)
       if [ $# -lt 2 ]; then
         echo "ERROR: $1 requires an argument"
@@ -104,7 +120,8 @@ source "$(dirname "$0")/common_utils"
 # read and export config variables
 read_config "$config_file"
 
-# user_mods directory precedence: command-line flag > config file > default
+# optional arg value precedence: command-line flag > config file > default
+SRC_DIR="${src_dir:-${SRC_DIR:-$DEFAULT_SRC_DIR}}"
 USER_MODS_DIR="${user_mods_dir:-${USER_MODS_DIR:-$DEFAULT_USER_MODS_DIR}}"
 
 # ensure required environment variables are set
