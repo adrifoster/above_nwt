@@ -183,9 +183,16 @@ set +u
 check_required_vars "${base_vars[@]}"
 set -u
 
+# get and check charge account
 chargenum="${chargenum:-${CHARGENUM:-$PROJECT}}"
 if [ -z "${chargenum}" ]; then
   echo "ERROR: neither CHARGENUM nor PROJECT is set" >&2
+  exit 1
+fi
+chargenum_lower="$(echo "$chargenum" | tr '[:upper:]' '[:lower:]')"
+groups_lower="$(groups | tr '[:upper:]' '[:lower:]')"
+if [[ "$(echo $groups_lower | grep -oE "\b${chargenum_lower}\b")" == "" ]]; then
+  echo "ERROR: you do not seem to have access to charge account '${chargenum}'" >&2
   exit 1
 fi
 
