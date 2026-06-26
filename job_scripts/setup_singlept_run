@@ -22,7 +22,7 @@ and namelist settings, then runs case.setup, preview_namelists, and
 case.build.
 
 Usage:
-  ./setup_singlept_run [-c|--case-dir <dir>] [-d|--clm-usrdat-dir-parent <dir>] [-n|--case-name <name>] [-s|--src-dir <dir>] [-u|--user-mods-dir <dir>] <config_file>
+  ./setup_singlept_run [-a|--account|--chargenum|--project <number>]  [-c|--case-dir <dir>] [-d|--clm-usrdat-dir-parent <dir>] [-n|--case-name <name>] [-s|--src-dir <dir>] [-u|--user-mods-dir <dir>] <config_file>
 
 The config file is sourced via read_config and must define the following:
 
@@ -49,9 +49,11 @@ Optional:
                  precedence over the config file. If set in neither place,
                  defaults to ../user_mods relative to this script's directory:
                  '${DEFAULT_USER_MODS_DIR}'.
-  CHARGENUM      project/charge account passed to --project. If unset, the
-                 PROJECT environment variable is used instead; if neither is
-                 set, the script exits with an error.
+  CHARGENUM      project/charge account passed to --project. Can also be set on
+                 the command line with -a/--account/--chargenum/--project, which
+                 takes precedence over the config file. If neither is given, the
+                 PROJECT environment variable is used instead; if that is unset,
+                 the script exits with an error.
   CLM_USRDAT_DIR_PARENT
                  \${CLM_USRDAT_DIR_PARENT}/dat_\${SITE} will be set as the
                  case's CLM_USRDAT_DIR namelist variable. Can also be set on
@@ -77,6 +79,7 @@ EOM
 #==============================================================================
 
 # parse command-line arguments
+chargenum=""
 case_dir=""
 clm_usrdat_dir_parent=""
 case_name=""
@@ -85,6 +88,14 @@ src_dir=""
 user_mods_dir=""
 while [ $# -gt 0 ]; do
   case "$1" in
+    -a|--account|--chargenum|--project)
+      if [ $# -lt 2 ]; then
+        echo "ERROR: $1 requires an argument" >&2
+        exit 1
+      fi
+      chargenum="$2"
+      shift 2
+      ;;
     -c|--case-dir)
       if [ $# -lt 2 ]; then
         echo "ERROR: $1 requires an argument" >&2
@@ -172,7 +183,7 @@ set +u
 check_required_vars "${base_vars[@]}"
 set -u
 
-chargenum="${CHARGENUM:-$PROJECT}"
+chargenum="${chargenum:-${CHARGENUM:-$PROJECT}}"
 if [ -z "${chargenum}" ]; then
   echo "ERROR: neither CHARGENUM nor PROJECT is set" >&2
   exit 1
