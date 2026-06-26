@@ -182,7 +182,7 @@ read_config "$config_file"
 # optional arg value precedence: command-line flag > config file > default
 CASE_DIR="${case_dir:-${CASE_DIR}}"
 CLM_USRDAT_DIR_PARENT="${clm_userdat_dir_parent:-${CLM_USRDAT_DIR_PARENT:-$DEFAULT_CLM_USRDAT_DIR_PARENT}}"
-CASENAME="${case_name:-${CASE_NAME}}"
+CASENAME="${case_name:-${CASENAME}}"
 SRC_DIR="${src_dir:-${SRC_DIR}}"
 USER_MODS_DIR="${user_mods_dir:-${USER_MODS_DIR:-$DEFAULT_USER_MODS_DIR}}"
 
