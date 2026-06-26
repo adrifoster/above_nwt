@@ -1,51 +1,52 @@
 #!/usr/bin/env bash
 #==============================================================================
-# Create and submit a single-point CLM/FATES case.
-#
-# Reads a config file (passed as the first argument), sets up a new CIME case
-# at a single lat/lon point using CLM_USRDAT, applies a standard set of XML
-# and namelist settings, then runs case.setup, preview_namelists, and
-# case.build. 
-#
-# Usage:
-#   ./setup_singlept_run [-u|--user-mods-dir <dir>] <config_file>
-#
-# The config file is sourced via read_config and must define the following:
-#
-#   SRC_DIR        path to the CTSM checkout
-#   CASE_DIR       directory in which the new case will be created.
-#   CASENAME       name of the case (case is created at $CASE_DIR/$CASENAME).
-#   COMPSET        compset to use (e.g. I1PtClm60Fates).
-#   SITE           site identifier; used to locate the subset surface/domain
-#                  data and the fsurdat file.
-#   LAT, LON       point coordinates (PTS_LAT / PTS_LON).
-#   STOP_N         number of years per run segment (STOP_OPTION=nyears).
-#   RESUBMIT       number of automatic resubmissions.
-#   SURDAT_FILE    file name of surface dataset
-#
-# Optional:
-#   USER_MODS_DIR  user_mods directory passed to create_newcase. Can also be
-#                  set on the command line with -u/--user-mods-dir, which takes
-#                  precedence over the config file. If set in neither place,
-#                  defaults to ../user_mods relative to this script's directory.
-#   CHARGENUM      project/charge account passed to --project. If unset, the
-#                  PROJECT environment variable is used instead; if neither is
-#                  set, the script exits with an error.
-#
-# example config file:
-#   SRC_DIR=/glade/work/afoster/ABoVE/calibration_update/CTSM
-#   CASE_DIR=/glade/work/afoster/ABoVE/calibration_update/cases
-#   USER_MODS_DIR=/glade/work/afoster/ABoVE/above_nwt/user_mods_black_spruce
-#   COMPSET=I1PtClm60Fates
-#   CASENAME=NWT_black_spruce
-#   CHARGENUM=P08010000
-#   STOP_N=20
-#   RESUBMIT=4
-#   LAT=62.43462
-#   LON=246.84602
-#   SITE=ZF14-207
-#   SURDAT_FILE=surfdata_ZF14-207_hist_2000_16pfts_c260129.nc
-#
+read -r -d '' helptext << EOM
+Create and submit a single-point CLM/FATES case.
+
+Reads a config file (passed as the first argument), sets up a new CIME case
+at a single lat/lon point using CLM_USRDAT, applies a standard set of XML
+and namelist settings, then runs case.setup, preview_namelists, and
+case.build.
+
+Usage:
+  ./setup_singlept_run [-u|--user-mods-dir <dir>] <config_file>
+
+The config file is sourced via read_config and must define the following:
+
+  SRC_DIR        path to the CTSM checkout
+  CASE_DIR       directory in which the new case will be created.
+  CASENAME       name of the case (case is created at \$CASE_DIR/\$CASENAME).
+  COMPSET        compset to use (e.g. I1PtClm60Fates).
+  SITE           site identifier; used to locate the subset surface/domain
+                 data and the fsurdat file.
+  LAT, LON       point coordinates (PTS_LAT / PTS_LON).
+  STOP_N         number of years per run segment (STOP_OPTION=nyears).
+  RESUBMIT       number of automatic resubmissions.
+  SURDAT_FILE    file name of surface dataset
+
+Optional:
+  USER_MODS_DIR  user_mods directory passed to create_newcase. Can also be
+                 set on the command line with -u/--user-mods-dir, which takes
+                 precedence over the config file. If set in neither place,
+                 defaults to ../user_mods relative to this script's directory.
+  CHARGENUM      project/charge account passed to --project. If unset, the
+                 PROJECT environment variable is used instead; if neither is
+                 set, the script exits with an error.
+
+example config file:
+  SRC_DIR=/glade/work/afoster/ABoVE/calibration_update/CTSM
+  CASE_DIR=/glade/work/afoster/ABoVE/calibration_update/cases
+  USER_MODS_DIR=/glade/work/afoster/ABoVE/above_nwt/user_mods_black_spruce
+  COMPSET=I1PtClm60Fates
+  CASENAME=NWT_black_spruce
+  CHARGENUM=P08010000
+  STOP_N=20
+  RESUBMIT=4
+  LAT=62.43462
+  LON=246.84602
+  SITE=ZF14-207
+  SURDAT_FILE=surfdata_ZF14-207_hist_2000_16pfts_c260129.nc
+EOM
 
 #==============================================================================
 
@@ -74,7 +75,7 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     -h|--help)
-      echo "Usage: $0 [-u|--user-mods-dir <dir>] <config_file>"
+      echo "$helptext"
       exit 0
       ;;
     -*)
